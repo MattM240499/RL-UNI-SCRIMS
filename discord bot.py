@@ -3,12 +3,13 @@ from discord import Game
 import discord
 import asyncio
 import random
+import google_io
 
 BOT_PREFIX = ("!")
 TOKEN = "NTM1ODIyNjU3OTU0Nzc1MDUy.DyNvbw.pzqNPiean381B_MRnOf_eKsp1Sc"
 global gameReady
 games=[]
-gameQueue = ["a","b","c","d","e"]
+gameQueue = []
 gameReady = False
 client = Bot(command_prefix = BOT_PREFIX)
 
@@ -69,36 +70,40 @@ async def status(context):
 async def report_score(context,result,score1,score2):
     print(games)
     gamefound = False
-    if games: #if list not empty
-        for game in range(len(games)):
-            print(games[game])
-            team1 = str(games[game][0][0])+", "+str(games[game][0][1])+", "+str(games[game][0][2])
-            team2 = str(games[game][1][0])+", "+str(games[game][1][1])+", "+str(games[game][1][2])
-            if context.message.author in games[game][0]:
-                print("Found player on Blue team")
-                record = [str(games[game][0][0]),str(games[game][0][1]),str(games[game][0][2]),str(score1),str(score2),str(games[game][1][0]),str(games[game][1][1]),str(games[game][1][2])]
-                print(record)
-                gameFound = True
-                del games[game]
-                break
-            
-            elif context.message.author in games[game][1]:
-                record = [str(games[game][0][0]),str(games[game][0][1]),str(games[game][0][2]),str(score2),str(score1),str(games[game][1][0]),str(games[game][1][1]),str(games[game][1][2])]
-                print("Found player on Orange team")
-                print(record)
-                gameFound = True
-                del games[game]
-                break
-            
+    if result in ["win","loss"]:
+            if result == "loss":
+                    x=score1
+                    score1 = score2
+                    score2 = x
+            if games: #if list not empty
+                for game in range(len(games)):
+                    print(games[game])
+                    if context.message.author in games[game][0]:
+                        print("Found player on Blue team")
+                        record = [str(games[game][0][0])[0:-5],str(games[game][0][1])[0:-5],str(games[game][0][2])[0:-5],str(score1),str(score2),str(games[game][1][0])[0:-5],str(games[game][1][1])[0:-5],str(games[game][1][2])[0:-5]]
+                        print(record)
+                        gameFound = True
+                        del games[game]
+                        break
+                    
+                    elif context.message.author in games[game][1]:
+                        record = [str(games[game][0][0])[0:-5],str(games[game][0][1])[0:-5],str(games[game][0][2])[0:-5],str(score2),str(score1),str(games[game][1][0])[0:-5],str(games[game][1][1])[0:-5],str(games[game][1][2])[0:-5]]
+                        print("Found player on Orange team")
+                        print(record)
+                        gameFound = True
+                        del games[game]
+                        break
+                    
+                    else:
+                        print("player not found")
+                if gameFound:
+                    google_io.addRecord(record)
+                    msg = context.message.author.mention+" reported the score as: "+record[0]+", "+record[1]+", "+record[2]+" "+record[3]+ " - "+record[4]+" "+record[5]+", "+record[6]+", "+record[7]
+                else:
+                    msg = "You are not currently in any games "+context.message.author.mention
+                await client.say(msg)
             else:
-                print("player not found")
-        if gameFound:        
-            msg = context.message.author.mention+" reported the score as: "+record[0]+", "+record[1]+", "+record[2]+" "+record[3]+ " - "+record[4]+" "+record[5]+", "+record[6]+", "+record[7]
-        else:
-            msg = "You are not currently in any games "+context.message.author.mention
-        await client.say(msg)
-    else:
-        await client.say("There are currently no active games"+context.message.author.mention)
+                await client.say("There are currently no active games"+context.message.author.mention)
 
 @client.event
 async def on_ready():
@@ -121,7 +126,7 @@ async def backgroundTasks():
             Orange = newGame[1]
             games.append(newGame)
             channel = discord.Object(id='512004628942946306')
-            channel = discord.Object(id='491408697168494630') #test channel
+            #channel = discord.Object(id='491408697168494630') #test channel
             msg = "Team A: "+str(Blue[0])+", "+ str(Blue[1])+ ", " + str(Blue[2])
             await client.send_message(channel, msg)
             msg = "Team B: "+str(Orange[0])+", " + str(Orange[1]) + ", " + str(Orange[2])
